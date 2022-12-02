@@ -6,6 +6,17 @@ from Coordinates import Coordinates
 
 
 class Game:
+    """
+    GUI of the game
+
+    Attributes:
+        screen:         PyGame surface where the game is displayed
+        clock:          PyGame clock of the game
+        terrain:        terrain of the current game
+        lander:         player's lander
+        lander_sprite:  sprite of the lander
+        font:           PyGame font of the text
+    """
     def __init__(self):
         self.screen = pg.display.set_mode(settings.RES)
         self.clock = pg.time.Clock()
@@ -18,18 +29,18 @@ class Game:
         self.font = None
 
     def draw_game(self) -> None:
+        """
+        Draws the game (terrain and lander)
+        """
         self.screen.fill(settings.BLACK)
         self.draw_terrain()
         self.draw_lander()
-        if self.lander.scored:
-            scored = self.font.render("You scored!", True, settings.WHITE)
-            self.screen.blit(scored, (settings.WIDTH // 2 - scored.get_width() // 2, 50))
-        if self.lander.died:
-            scored = self.font.render("You died", True, settings.WHITE)
-            self.screen.blit(scored, (settings.WIDTH // 2 - scored.get_width() // 2, 50))
         pg.display.update()
 
     def draw_lander(self) -> None:
+        """
+        Draws the lander and all its information.
+        """
         remaining_fuel = self.font.render("Fuel: " + str(self.lander.fuel), True, settings.WHITE)
         vertical_speed = self.font.render("Vertical Speed: " + str(round(self.lander.speed.y)), True, settings.WHITE)
         horizontal_speed = self.font.render("Horizontal Speed: " + str(round(self.lander.speed.x)), True, settings.WHITE)
@@ -44,6 +55,9 @@ class Game:
         self.screen.blit(rotated_sprite, new_rect)
 
     def draw_terrain(self) -> None:
+        """
+        Draws the terrain
+        """
         for i in range(settings.TERRAIN_POINTS_NUMBER):
             if self.terrain.flat_surface_index <= i < self.terrain.flat_surface_index + settings.FLAT_SURFACE_SIZE:
                 line_width = 4
@@ -54,6 +68,9 @@ class Game:
             pg.draw.line(self.screen, settings.WHITE, line_start, line_end, line_width)
 
     def run(self):
+        """
+        Main PyGame loop
+        """
         pg.init()
         pg.display.set_caption("Lunar Lander")
         self.font = pg.font.SysFont("courier", 20)

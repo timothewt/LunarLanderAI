@@ -20,7 +20,9 @@ class Lander:
         thrust:             True if the reactors are on, False if they are off
         rotation_direction: -1 if it rotates right, 1 if it rotates left, 0 if there is no rotation
         terrain:            terrain of the game
-        died:              True if it is still alive, False otherwise
+        crashed:           True if it is still alive, False otherwise
+        scored:             True if the lander landed on the flat surface during the last update
+        score:              score of the game, gets +1 if it lands on the flat surface and -1 if it crashes
     """
     def __init__(self, max_fuel: int, size: Coordinates, position: Coordinates = Coordinates(0, 0),
                  speed: Coordinates = Coordinates(0, 0), terrain: Terrain = None):
@@ -34,24 +36,32 @@ class Lander:
         self.thrust: bool = False
         self.rotation_direction: int = 0
         self.terrain: Terrain = terrain
-        self.died: bool = False
+        self.crashed: bool = False
         self.scored: bool = False
         self.score: int = 0
 
     def rotate(self, angle: float) -> None:
+        """
+        Rotates the lander at a maximum of +-90°
+        :param angle: angle of rotation in degrees
+        """
         self.rotation += angle
         self.rotation = max(self.rotation, -90)
         self.rotation = min(self.rotation, 90)
 
     def update(self) -> None:
-        self.died = False
+        """
+        Updates the lander according to all its information.
+        If it collides with the terrain, tells if it scored or crashed, else moves
+        """
+        self.crashed = False
         self.scored = False
         if self.collides_with_terrain():
             if self.is_on_goal():
                 self.scored = True
                 self.score += 1
             else:
-                self.died = True
+                self.crashed = True
                 self.score -= 1
             self.terrain.generate_terrain()
             self.reset()
@@ -73,6 +83,10 @@ class Lander:
             self.rotation_direction = 0
 
     def collides_with_terrain(self) -> bool:
+        """
+        Tells if the lander collides with a part of the terrain
+        :return: True if it collides, False otherwise
+        """
         for i in range(len(self.terrain.points) - 1):
             point = self.terrain.points[i]
             next_point = self.terrain.points[i + 1]
@@ -83,14 +97,26 @@ class Lander:
         return False
 
     def is_on_goal(self) -> bool:
+        """
+        Tells if the lander is currently on the goal which is the flat surface
+        :return: True if it is on it, False otherwise
+        """
         if self.collides_with_terrain():
             return self.terrain.flat_surface_start.x < self.position.x < self.terrain.flat_surface_end.x - self.size.x
         return False
 
     def get_distance_from_goal(self) -> float:
+        """
+        Gives the distance between the center of the lander and the center of the goal (flat surface)
+        :return: the distance as pixels
+        """
         return sqrt((self.position.x + self.size.x / 2 - self.terrain.flat_surface_center.x) ** 2 + (self.position.y + self.size.y / 2 - self.terrain.flat_surface_center.y) ** 2)
 
     def get_closest_obstacle(self) -> Coordinates:
+        """
+        Gives the coordinates of the closest terrain point, used to estimate the obstacles around the lander.
+        :return: the coordinates of the point
+        """
         closest_point = Coordinates()
         distance_from_closest_point = 99999
         for i in range(len(self.terrain.points) - 1):
@@ -102,7 +128,10 @@ class Lander:
         return closest_point
 
     def reset(self) -> None:
-        self.died = True
+        """
+        Resets the lander at its origin position and state
+        """
+        self.crashed = True
         self.position = self.origin_position
         self.speed = Coordinates(0, 0)
         self.rotation = 0
@@ -110,17 +139,21 @@ class Lander:
         self.thrust = 0
 
     def get_state(self) -> State:
+        """
+        Gives the current state of the lander
+        :return: the current state
+        """
         closest_obstacle = self.get_closest_obstacle()
         return State(
-            self.position.x,
-            self.position.y,
+            self.position.x + self.size.x,
+            self.position.y + self.size.y,
             self.speed.x,
             self.speed.y,
             self.rotation,
             self.get_distance_from_goal(),
             closest_obstacle.x,
             closest_obstacle.y,
-            self.died,
+            self.crashed,
             self.scored
         )
 
